@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noUnusedLocals": false,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["node", "electron-vite/node"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "electron.vite.config.ts"
+  ]
+}
