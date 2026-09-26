@@ -32,11 +32,11 @@ const api = {
   copyTokenToClipboard: async (id: string): Promise<boolean> => {
     const token: string | null = await ipcRenderer.invoke('accounts:copyToken', id)
     if (!token) return false
-    clipboard.writeText(token)
+    await clipboard.writeText(token)
     return true
   },
 
-  copyText: (text: string): void => clipboard.writeText(text),
+  copyText: (text: string): Promise<void> => clipboard.writeText(text),
 
   // Contrôles fenêtre
   windowMinimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),
