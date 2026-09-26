@@ -456,7 +456,19 @@ function addViaToken(): void {
 }
 
 async function grabCurrentToken(): Promise<void> {
-  toast('Connecte-toi dans la fenêtre pour révéler ton token…', 'info')
+  // Le compte affiché dans l'onglet actif : on révèle son token déjà enregistré.
+  if (activeId) {
+    const acc = accounts.find((a) => a.id === activeId)
+    const token = await api.getToken(activeId)
+    if (token) {
+      showTokenModal(acc?.name ?? 'ce compte', token, true)
+      return
+    }
+    toast('Token introuvable pour ce compte.', 'error')
+    return
+  }
+  // Aucun compte ouvert : on ouvre une fenêtre de connexion pour en capturer un.
+  toast('Ouvre un compte, ou connecte-toi dans la fenêtre pour révéler ton token…', 'info')
   const res = await api.captureToken()
   if (!res.ok || !res.token) {
     toast(res.error || 'Capture annulée.', 'error')
@@ -585,7 +597,7 @@ function confirmModal(
   backdrop.hidden = false
 }
 
-function showTokenModal(name: string, token: string): void {
+function showTokenModal(name: string, token: string, alreadySaved = false): void {
   modalEl.innerHTML = ''
   const h = document.createElement('h3')
   h.textContent = 'Token récupéré'
@@ -607,20 +619,23 @@ function showTokenModal(name: string, token: string): void {
     api.copyText(token)
     toast('Token copié.', 'success')
   }
-  const save = document.createElement('button')
-  save.className = 'btn btn--primary'
-  save.textContent = 'Enregistrer comme compte'
-  save.onclick = async () => {
-    const res = await api.addAccount(name, token)
-    if (res.ok && res.account) {
-      await loadAccounts()
-      toast(`Compte « ${res.account.name} » ajouté.`, 'success')
-      closeModal()
-    } else {
-      toast(res.error || 'Échec de l’enregistrement.', 'error')
+  actions.append(copy)
+  if (!alreadySaved) {
+    const save = document.createElement('button')
+    save.className = 'btn btn--primary'
+    save.textContent = 'Enregistrer comme compte'
+    save.onclick = async () => {
+      const res = await api.addAccount(name, token)
+      if (res.ok && res.account) {
+        await loadAccounts()
+        toast(`Compte « ${res.account.name} » ajouté.`, 'success')
+        closeModal()
+      } else {
+        toast(res.error || 'Échec de l’enregistrement.', 'error')
+      }
     }
+    actions.append(save)
   }
-  actions.append(copy, save)
   modalEl.append(h, p, ta, actions)
   backdrop.hidden = false
 }
@@ -634,7 +649,9 @@ $('#btn-close').onclick = () => api.windowClose()
 $('#btn-add-login').onclick = addViaLogin
 $('#btn-add-login-2').onclick = addViaLogin
 $('#btn-add-token').onclick = addViaToken
-$('#btn-grab-token').onclick = grabCurrentToken
+const grabBtn = $('#btn-grab-token')
+grabBtn.onclick = grabCurrentToken
+grabBtn.title = 'Révèle le token du compte ouvert (F9, marche aussi en plein écran)'
 
 // Pastille flottante pour quitter le mode immersif.
 const exitPill = document.createElement('button')
@@ -647,6 +664,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'F11') {
     e.preventDefault()
     toggleImmersive()
+    return
+  }
+  if (e.key === 'F9') {
+    e.preventDefault()
+    void grabCurrentToken()
     return
   }
   if (e.key === 'Escape') {

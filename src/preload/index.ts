@@ -36,6 +36,8 @@ const api = {
     return true
   },
 
+  getToken: (id: string): Promise<string | null> => ipcRenderer.invoke('accounts:copyToken', id),
+
   copyText: (text: string): Promise<void> => clipboard.writeText(text),
 
   // Contrôles fenêtre
